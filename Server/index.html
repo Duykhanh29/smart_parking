@@ -1,0 +1,158 @@
+<!DOCTYPE HTML>
+<html>
+
+<head>
+    <title>ESP8266 WebSocket</title>
+    <style>
+        * {
+            padding: 0;
+            margin: 0;
+            box-sizing: border-box;
+        }
+        
+        html {
+            scroll-behavior: smooth;
+            font-family: Helvetica, Arial, sans-serif;
+        }
+        
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Montserrat', sans-serif;
+            background: #ffffff;
+            display: grid;
+            align-items: center;
+            height: 100vh;
+            text-align: center;
+        }
+        
+        h1 {
+            font-size: 42px;
+            color: #2c3e50;
+        }
+        
+        input[type="checkbox"] {
+            position: relative;
+            width: 100px;
+            height: 40px;
+            background: #bdc3c7;
+            -webkit-appearance: none;
+            border-radius: 20px;
+            outline: none;
+            transition: .4s;
+            box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.2);
+            cursor: pointer;
+        }
+        
+        input:checked[type="checkbox"] {
+            background: #ff7606;
+        }
+        
+        input[type="checkbox"]::before {
+            z-index: 2;
+            position: absolute;
+            content: "";
+            left: 0;
+            width: 40px;
+            height: 40px;
+            background: #fff;
+            border-radius: 50%;
+            transform: scale(1.1);
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+            transition: .4s;
+        }
+        
+        input:checked[type="checkbox"]::before {
+            left: 60px;
+        }
+        
+        .toggle {
+            position: relative;
+            display: inline;
+        }
+        
+        label {
+            position: absolute;
+            color: #fff;
+            font-weight: 600;
+            font-size: 20px;
+            pointer-events: none;
+        }
+        
+        .onbtn {
+            bottom: 12px;
+            left: 15px;
+        }
+        
+        .ofbtn {
+            bottom: 11px;
+            right: 14px;
+            color: #34495e;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div> 
+        <span id="status" style="font-weight: bold;"> Chưa kết nối </span>
+    </div>
+    <div class="toggleBox">
+        <h1>Nhấn công tắc để điều khiển rào chắn</h1>
+        <div class="toggle">
+            <input type="checkbox" id="led" name="led" disabled="true" />
+            <label for="" class="onbtn">Bật</label>
+            <label for="" class="ofbtn">Tắt</label>
+        </div>
+        <div id="test">
+            
+        </div>
+    </div>
+    </div>
+    <!-- <div> Control LED
+        <input type="checkbox" id="led" name="led" disabled="true" />
+    </div> -->
+
+    <script type="text/javascript">
+        var button = document.getElementById('btn');
+        var led = document.getElementById('led');
+        var url = window.location.host; // hàm trả về url của trang hiện tại kèm theo port
+        document.getElementById('test').innerHTML = 'test cổng: '+url;
+        var ws = new WebSocket('ws://' + url + '/ws'); // mở 1 websocket với port 8000
+        console.log('connecting...')
+        ws.onopen = function() //khi websocket được mở thì hàm này sẽ được thưc hiện
+            {
+                document.getElementById('status').innerHTML = 'Đã kết nối';
+                led.disabled = false; //khi websocket được mở, mới cho phép         
+                console.log('connected...')
+            };
+        ws.onmessage = function(evt) // sự kiện xảy ra khi client nhận dữ liệu từ server
+            {
+                console.log(evt.data)
+                if (evt.data == 'BTN_PRESSED') {
+                    button.checked = true;
+                } else if (evt.data == 'BTN_RELEASE') {
+                    button.checked = false;
+                } else if (evt.data == 'LED_OFF') {
+                    led.checked = false;
+                } else if (evt.data == 'LED_ON') {
+                    led.checked = true;
+                }
+            };
+        ws.onclose = function() { // hàm này sẽ được thực hiện khi đóng websocket
+            led.disabled = true;
+            document.getElementById('status').innerHTML = 'Connected';
+        };
+        led.onchange = function() { // thực hiện thay đổi bật/tắt led
+            var led_status = 'BR_OFF';
+            if (led.checked) {
+                led_status = 'BR_ON';
+            }
+            ws.send(led_status)
+        }
+        ws.send('Hello');
+    </script>
+
+</body>
+
+</html>
